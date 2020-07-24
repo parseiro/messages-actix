@@ -1,3 +1,5 @@
+mod errors;
+
 #[macro_use]
 extern crate actix_web;
 
