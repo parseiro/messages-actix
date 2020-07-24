@@ -98,7 +98,9 @@ fn clear (state: web::Data<AppState>) -> Result<web::Json<IndexResponse>> {
 
 fn post_error(err: JsonPayloadError, req: &HttpRequest) -> Error {
     let extns = req.extensions();
-//    println!("{:?}", req);
+    println!("{:?}", req);
+    println!("{:?}", err);
+    println!("{:?}", extns);
     let state = extns.get::<web::Data<AppState>>();
     match state  {
         Some(st) => {
@@ -113,6 +115,7 @@ fn post_error(err: JsonPayloadError, req: &HttpRequest) -> Error {
         }
         None => {
             panic!("Erro estranho");
+            
         }
     }
     
@@ -139,8 +142,8 @@ impl MessageApp {
                 .service(
                     web::resource("/send")
                         .data(web::JsonConfig::default()
-                            .limit(4096)
-                            .error_handler(post_error),
+                            //.limit(4096)
+                            //.error_handler(post_error),
                         )
                         .route(web::post().to(post)),
                 )
