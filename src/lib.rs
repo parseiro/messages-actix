@@ -96,6 +96,29 @@ fn clear (state: web::Data<AppState>) -> Result<web::Json<IndexResponse>> {
     }))
 }
 
+#[derive(Serialize)]
+struct LookupResponse {
+    server_id: usize,
+    request_count: usize,
+    result: Option<String>,
+}
+
+#[get("/lookup/{index}")]
+fn lookup(state: web::Data<AppState>, idx: web::Path<usize>) -> Result<web::Json<LookupResponse>> {
+    let request_count = state.request_count.get()+1;
+    state.request_count.set(request_count);
+    let result;
+    {
+        let ms = state.messages.lock().unwrap();
+        result = ms.get(idx.into_inner()).cloned();
+    }
+    Ok (web::Json(LookupResponse {
+        server_id: state.server_id,
+        request_count,
+        result,
+    }))
+}
+
 fn post_error(err: JsonPayloadError, req: &HttpRequest) -> Error {
     let extns = req.extensions();
     println!("{:?}", req);
@@ -142,12 +165,13 @@ impl MessageApp {
                 .service(
                     web::resource("/send")
                         .data(web::JsonConfig::default()
-                            //.limit(4096)
-                            //.error_handler(post_error),
+                            .limit(1024)
+                            .error_handler(post_error),
                         )
                         .route(web::post().to(post)),
                 )
                 .service(clear)
+                .service(lookup)
         })
         .bind(("127.0.0.1", self.port))?
         .workers(3)
