@@ -8,6 +8,5 @@ where
     T: serde::Serialize,
     AppError: From<E>,
 {
-        res.map(|d| HttpResponse::Ok().json(d))
-            .map_err(Into::into)
+    res.map(|d| HttpResponse::Ok().json(d)).map_err(Into::into)
 }

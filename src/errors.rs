@@ -1,13 +1,10 @@
-use actix_web:: {
-    error::BlockingError,
-    web::HttpResponse,
-};
-use diesel::result:: {
+use actix_web::{error::BlockingError, web::HttpResponse};
+use diesel::result::{
     DatabaseErrorKind::UniqueViolation,
-    Error::{DatabaseError, NotFound}
+    Error::{DatabaseError, NotFound},
 };
-use std::fmt;
 use serde::Serialize;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum AppError {
@@ -26,7 +23,6 @@ impl fmt::Display for AppError {
             AppError::OperationCanceled => write!(f, "The running operation was canceled"),
         }
     }
-
 }
 
 impl From<diesel::result::Error> for AppError {
@@ -61,7 +57,7 @@ impl actix_web::ResponseError for AppError {
             AppError::RecordNotFound => HttpResponse::NotFound(),
             _ => HttpResponse::InternalServerError(),
         };
-        builder.json(ErrorResponse {err})
+        builder.json(ErrorResponse { err })
     }
 
     fn render_response(&self) -> HttpResponse {

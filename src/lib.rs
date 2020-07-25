@@ -4,7 +4,7 @@ extern crate diesel;
 #[macro_use]
 extern crate serde_derive;
 
-use actix_web::{App, middleware, HttpServer};
+use actix_web::{middleware, App, HttpServer};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 type Pool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
@@ -28,16 +28,16 @@ impl Blog {
         let pool = r2d2::Pool::builder()
             .build(manager)
             .expect("Failed to create pool.");
-    
-            println!("Starting http server: 127.0.0.1:{}", self.port);
-            HttpServer::new(move || {
-                App::new()
-                    .data(pool.clone())
-                    .wrap(middleware::Logger::default())
-                    .configure(routes::users::configure)
-            })
-            .bind(("127.0.0.1", self.port))?
-            .run()
+
+        println!("Starting http server: 127.0.0.1:{}", self.port);
+        HttpServer::new(move || {
+            App::new()
+                .data(pool.clone())
+                .wrap(middleware::Logger::default())
+                .configure(routes::users::configure)
+        })
+        .bind(("127.0.0.1", self.port))?
+        .run()
     }
 }
 
@@ -80,7 +80,7 @@ struct PostResponse {
 }
 
 pub struct MessageApp {
-    port: u16,    
+    port: u16,
 }
 
 #[derive(Serialize)]
@@ -98,7 +98,7 @@ fn index(state: web::Data<AppState>) -> Result<web::Json<IndexResponse>> {
     {
         ms_clone = state.messages.lock().unwrap().clone();
     }
-    
+
     Ok(web::Json(IndexResponse {
         server_id: state.server_id,
         request_count,
@@ -113,7 +113,7 @@ fn post(msg: web::Json<PostInput>, state: web::Data<AppState>) -> Result<web::Js
         let mut ms = state.messages.lock().unwrap();
         ms.push(msg.message.clone());
     }
-    
+
     Ok(web::Json(PostResponse {
         server_id: state.server_id,
         request_count,
@@ -129,7 +129,7 @@ fn clear (state: web::Data<AppState>) -> Result<web::Json<IndexResponse>> {
         let mut ms = state.messages.lock().unwrap();
         ms.clear();
     }
-    
+
     Ok(web::Json(IndexResponse {
         server_id: state.server_id,
         request_count,
@@ -179,20 +179,20 @@ fn post_error(err: JsonPayloadError, req: &HttpRequest) -> Error {
         }
         None => {
             panic!("Erro estranho");
-            
+
         }
     }
-    
+
 }
 
 impl MessageApp {
     pub fn new(port: u16) -> Self {
         MessageApp { port }
     }
-    
+
     pub fn run(&self) -> std::io::Result<()> {
         let messages = Arc::new(Mutex::new(vec![]));
-        
+
         println!("Starting http server: 127.0.0.1:{}", self.port);
         HttpServer::new(move || {
             App::new()
