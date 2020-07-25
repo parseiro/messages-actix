@@ -21,7 +21,10 @@ pub struct Post {
 }
 
 
-pub fn create_user(conn: &SqliteConnection, username: &str) -> Result<User> {
+pub fn create_user(
+    conn: &SqliteConnection,
+    username: &str,
+) -> Result<User> {
     conn.transaction(|| {
         diesel::insert_into(users::table)
             .values((users::username.eq(username),))
@@ -40,13 +43,17 @@ pub enum UserKey<'a> {
     ID(i32),
 }
 
-pub fn find_user<'a>(conn: &SqliteConnection, key: UserKey<'a>) -> Result<User> {
+pub fn find_user<'a>(
+    conn: &SqliteConnection,
+    key: UserKey<'a>,
+) -> Result<User> {
     match key {
         UserKey::Username(name) => users::table
             .filter(users::username.eq(name))
             .select((users::id, users::username))
             .first::<User>(conn)
             .map_err(AppError::from),
+        
         UserKey::ID(id) => users::table
             .find(id)
             .select((users::id, users::username))
@@ -56,27 +63,33 @@ pub fn find_user<'a>(conn: &SqliteConnection, key: UserKey<'a>) -> Result<User> 
         }
 }
 
-pub fn create_post(conn: &SqliteConnection, user: &User, title: &str, body: &str)
--> Result<Post> {
+pub fn create_post(
+    conn: &SqliteConnection,
+    user_var: &User,
+    title_var: &str,
+    body_var: &str,
+) -> Result<Post> {
     conn.transaction(|| {
         diesel::insert_into(posts::table)
             .values((
-                posts::user_id.eq(user.id),
-                posts::title.eq(title),
-                posts::body.eq(body),
+                posts::user_id.eq(user_var.id),
+                posts::title.eq(title_var),
+                posts::body.eq(body_var),
             ))
             .execute(conn)?;
         
-            posts::table
-                .order(posts::id.desc())
-                .select(posts::all_columns)
-                .first(conn)
-                .map_err(Into::into)
+        posts::table
+            .order(posts::id.desc())
+            .select(posts::all_columns)
+            .first(conn)
+            .map_err(Into::into)
     })
 }
 
-pub fn publish_post(conn: &SqliteConnection, post_id: i32)
--> Result<Post> {
+pub fn publish_post(
+    conn: &SqliteConnection,
+    post_id: i32,
+) -> Result<Post> {
     conn.transaction(|| {
         diesel::update(posts::table.filter(posts::id.eq(post_id)))
             .set(posts::published.eq(true))
@@ -100,8 +113,10 @@ pub fn all_posts(conn: &SqliteConnection) -> Result<Vec<(Post, User)>> {
         .map_err(Into::into)
 }
 
-pub fn user_posts(conn: &SqliteConnection, user_id: i32)
--> Result<Vec<Post>> {
+pub fn user_posts(
+    conn: &SqliteConnection,
+    user_id: i32,
+) -> Result<Vec<Post>> {
     posts::table
         .filter(posts::user_id.eq(user_id))
         .order(posts::id.desc())
