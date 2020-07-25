@@ -2,6 +2,7 @@ extern crate dotenv;
 
 use dotenv::dotenv;
 use std::env;
+use messages_actix::Blog;
 
 fn main() -> std::io::Result<()> {
     dotenv().ok();
