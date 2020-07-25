@@ -1,4 +1,7 @@
-use messages_actix::MessageApp;
+//use messages_actix::MessageApp;
+
+use dotenv::dotenv;
+use std::env;
 //use std::io::Result;
 
 fn main() -> std::io::Result<()> {    

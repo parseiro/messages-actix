@@ -1,6 +1,6 @@
 use crate::errors::AppError;
 use crate::schema::{users};
-use diesel::prelude:*;
+use diesel::prelude::*;
 
 type Result<T> = std::result::Result<T, AppError>;
 
@@ -22,4 +22,24 @@ pub fn create_user(conn: &SqliteConnection, username: &str) -> Result<User> {
             .first(conn)
             .map_err(Into::into)
     })
+}
+
+pub enum UserKey<'a> {
+    Username(&'a str),
+    ID(i32),
+}
+
+pub fn find_user<'a>(conn: &SqliteConnection, key: UserKey<'a>) -> Result<User> {
+    match key {
+        UserKey::Username(name) => users::table
+            .filter(users::username.eq(name))
+            .select((users::id, users::username))
+            .first::<User>(conn)
+            .map_err(AppError::from),
+        UserKey::ID(id) => users::table
+            .find(id)
+            .select((users::id, users::username))
+            .first::<User>(conn)
+            .map_err(Into::into),
+    }
 }
