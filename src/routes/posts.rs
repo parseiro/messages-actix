@@ -12,7 +12,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             .route(web::get().to_async(user_posts)),
     )
     .service(web::resource("/posts")
-        .route(web::get().to_async(all_posts)))
+        .route(web::get().to_async(all_published_posts)))
     .service(web::resource("/posts/{id}/publish")
         .route(web::post().to_async(publish_post)));
 
@@ -64,10 +64,10 @@ fn user_posts(
     .then(convert)
 }
 
-fn all_posts(pool: web::Data<Pool>) -> impl Future<Item = HttpResponse, Error = AppError> {
-    web::block(move|| {
+fn all_published_posts(pool: web::Data<Pool>) -> impl Future<Item = HttpResponse, Error = AppError> {
+    web::block(move || {
         let conn: &SqliteConnection = &pool.get().unwrap();
-        models::all_posts(conn)
+        models::all_published_posts(conn)
     })
     .then(convert)
 }

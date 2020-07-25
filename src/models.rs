@@ -112,7 +112,7 @@ pub fn publish_post(
     })
 }
 
-pub fn all_posts(conn: &SqliteConnection)
+pub fn all_published_posts(conn: &SqliteConnection)
 -> Result<Vec<((Post, User), Vec<(Comment, User)>)>> {
     let query = posts::table
         .order(posts::id.desc())
