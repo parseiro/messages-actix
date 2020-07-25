@@ -1,5 +1,5 @@
 use crate::errors::AppError;
-use crate::schema::{users, posts};
+use crate::schema::{users, posts, comments};
 use diesel::prelude::*;
 
 type Result<T> = std::result::Result<T, AppError>;
@@ -20,6 +20,15 @@ pub struct Post {
     pub published: bool,
 }
 
+#[derive(Queryable, Identifiable, Associations, Serialize, Debug)]
+#[belongs_to(User)]
+#[belongs_to(Post)]
+pub struct Comment {
+    pub id: i32,
+    pub user_id: i32,
+    pub post_id: i32,
+    pub body: String,
+}
 
 pub fn create_user(
     conn: &SqliteConnection,
@@ -103,14 +112,23 @@ pub fn publish_post(
     })
 }
 
-pub fn all_posts(conn: &SqliteConnection) -> Result<Vec<(Post, User)>> {
-    posts::table
+pub fn all_posts(conn: &SqliteConnection)
+-> Result<Vec<((Post, User), Vec<(Comment, User)>)>> {
+    let query = posts::table
         .order(posts::id.desc())
         .filter(posts::published.eq(true))
         .inner_join(users::table)
-        .select((posts::all_columns, (users::id, users::username)))
-        .load::<(Post, User)>(conn)
-        .map_err(Into::into)
+        .select((posts::all_columns, (users::id, users::username)));
+    let posts_with_user = query.load::<(Post, User)>(conn)?;
+    let (posts, post_users): (Vec<_>, Vec<_>) = posts_with_user.into_iter().unzip();
+
+    let comments = Comment::belonging_to(&posts)
+        .inner_join(users::table)
+        .select((comments::all_columns, (users::id, users::username)))
+        .load::<(Comment, User)>(conn)?
+        .grouped_by(&posts);
+    
+        Ok(posts.into_iter().zip(post_users).zip(comments).collect())
 }
 
 pub fn user_posts(
@@ -122,5 +140,62 @@ pub fn user_posts(
         .order(posts::id.desc())
         .select(posts::all_columns)
         .load::<Post>(conn)
+        .map_err(Into::into)
+}
+
+pub fn create_comment(
+    conn: &SqliteConnection,
+    user_id_var: i32,
+    post_id_var: i32,
+    body_var: &str,
+) -> Result<Comment> {
+    conn.transaction(|| {
+        diesel::insert_into(comments::table)
+            .values((
+                comments::user_id.eq(user_id_var),
+                comments::post_id.eq(post_id_var),
+                comments::body.eq(body_var),
+            ))
+            .execute(conn)?;
+
+        comments::table
+            .order(comments::id.desc())
+            .select(comments::all_columns)
+            .first(conn)
+            .map_err(Into::into)
+    })
+}
+
+pub fn post_comments(
+    conn: &SqliteConnection,
+    post_id_var: i32,
+) -> Result<Vec<(Comment, User)>> {
+    comments::table
+        .filter(comments::post_id.eq(post_id_var))
+        .inner_join(users::table)
+        .select((comments::all_columns, (users::id, users::username)))
+        .load::<(Comment, User)>(conn)
+        .map_err(Into::into)
+}
+
+#[derive(Queryable, Serialize, Debug)]
+pub struct PostWithComment {
+    pub id: i32,
+    pub title: String,
+    pub published: bool,
+}
+
+pub fn user_comments(
+    conn: &SqliteConnection,
+    user_id_var: i32,
+) -> Result<Vec<(Comment, PostWithComment)>> {
+    comments::table
+        .filter(comments::user_id.eq(user_id_var))
+        .inner_join(posts::table)
+        .select((
+            comments::all_columns,
+            (posts::id, posts::title, posts::published),
+        ))
+        .load::<(Comment, PostWithComment)>(conn)
         .map_err(Into::into)
 }
