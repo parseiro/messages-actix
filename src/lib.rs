@@ -5,6 +5,7 @@ extern crate diesel;
 extern crate serde_derive;
 
 use actix_web::{middleware, App, HttpServer};
+use actix_web::http::ContentEncoding;
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 type Pool = r2d2::Pool<ConnectionManager<PostgresConnectionManager>>;
@@ -33,6 +34,7 @@ impl Blog {
         HttpServer::new(move || {
             App::new()
                 .data(pool.clone())
+                .wrap(middleware::Compress::new(ContentEncoding::Br))
                 .wrap(middleware::Logger::default())
                 .configure(routes::users::configure)
                 //.configure(routes::posts::configure)
