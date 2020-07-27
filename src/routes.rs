@@ -1,7 +1,7 @@
 use crate::errors::AppError;
 use actix_web::HttpResponse;
 
-//pub(super) mod users;
+pub(super) mod users;
 //pub(super) mod posts;
 //pub(super) mod comments;
 
