@@ -5,7 +5,7 @@ use crate::schema::users;
 use diesel::prelude::*;
 
 type Result<T> = std::result::Result<T, AppError>;
-type DBConnection = SqliteConnection;
+type DBConnection = PgConnection;
 
 #[derive(Queryable, Identifiable, Serialize, Debug, PartialEq)]
 pub struct User {
@@ -14,7 +14,7 @@ pub struct User {
 }
 
 
-#[derive(Queryable, Associations, Identifiable, Serialize, Debug)]
+/*#[derive(Queryable, Associations, Identifiable, Serialize, Debug)]
 #[belongs_to(User)]
 pub struct Post {
     pub id: i32,
@@ -32,20 +32,21 @@ pub struct Comment {
     pub user_id: i32,
     pub post_id: i32,
     pub body: String,
-}
-*/
+}*/
+
 pub fn create_user(
+//    conn: &DBConnection,
     conn: &DBConnection,
     username: &str,
 ) -> Result<User> {
     conn.transaction(|| {
         diesel::insert_into(users::table)
-            .values((users::username.eq(username),))
+            .values((users::name.eq(username),))
             .execute(conn)?;
 
         users::table
             .order(users::id.desc())
-            .select((users::id, users::username))
+            .select((users::id, users::name))
             .first(conn)
             .map_err(Into::into)
     })
@@ -62,14 +63,14 @@ pub fn find_user<'a>(
 ) -> Result<User> {
     match key {
         UserKey::Username(name) => users::table
-            .filter(users::username.eq(name))
-            .select((users::id, users::username))
+            .filter(users::name.eq(name))
+            .select((users::id, users::name))
             .first::<User>(conn)
             .map_err(AppError::from),
         
         UserKey::ID(id) => users::table
             .find(id)
-            .select((users::id, users::username))
+            .select((users::id, users::name))
             .first::<User>(conn)
             .map_err(Into::into),
  

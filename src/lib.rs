@@ -8,7 +8,7 @@ use actix_web::{middleware, App, HttpServer};
 use actix_web::http::ContentEncoding;
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
-type Pool = r2d2::Pool<ConnectionManager<PostgresConnectionManager>>;
+type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 mod errors;
 mod models;
@@ -25,7 +25,8 @@ impl Blog {
     }
 
     pub fn run(&self, database_url: String) -> std::io::Result<()> {
-        let manager = Pool::new(database_url);
+        let manager = ConnectionManager::<PgConnection>::new(database_url);
+        //        let manager = Pool::new(database_url);
         let pool = r2d2::Pool::builder()
             .build(manager)
             .expect("Failed to create pool.");
