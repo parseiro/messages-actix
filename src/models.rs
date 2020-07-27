@@ -1,14 +1,17 @@
 use crate::errors::AppError;
-use crate::schema::{users, posts, comments};
+//use crate::schema::users;
+//use crate::schema::posts, 
+//use crate::schema::comments;
 use diesel::prelude::*;
 
 type Result<T> = std::result::Result<T, AppError>;
 
-#[derive(Queryable, Identifiable, Serialize, Debug, PartialEq)]
+/*#[derive(Queryable, Identifiable, Serialize, Debug, PartialEq)]
 pub struct User {
     pub id: i32,
     pub username: String,
 }
+
 
 #[derive(Queryable, Associations, Identifiable, Serialize, Debug)]
 #[belongs_to(User)]
@@ -29,7 +32,7 @@ pub struct Comment {
     pub post_id: i32,
     pub body: String,
 }
-
+*/
 pub fn create_user(
     conn: &SqliteConnection,
     username: &str,
@@ -72,7 +75,7 @@ pub fn find_user<'a>(
         }
 }
 
-pub fn create_post(
+/*pub fn create_post(
     conn: &SqliteConnection,
     user_var: &User,
     title_var: &str,
@@ -198,4 +201,4 @@ pub fn user_comments(
         ))
         .load::<(Comment, PostWithComment)>(conn)
         .map_err(Into::into)
-}
+}*/
