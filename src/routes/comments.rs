@@ -5,6 +5,8 @@ use actix_web::{web, HttpResponse};
 use diesel::prelude::*;
 use futures::Future;
 
+type DBConnection = SqliteConnection;
+
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg
         .service(web::resource("/users/{id}/comments")
@@ -29,7 +31,7 @@ fn add_comment(
     pool: web::Data<Pool>,
 ) -> impl Future<Item = HttpResponse, Error = AppError> {
     web::block(move|| {
-        let conn: &SqliteConnection = &pool.get().unwrap();
+        let conn: &DBConnection = &pool.get().unwrap();
         let data = comment.into_inner();
         let user_id = data.user_id;
         let body = data.body;
@@ -43,7 +45,7 @@ fn post_comments(
     pool: web::Data<Pool>,
 ) -> impl Future<Item = HttpResponse, Error = AppError> {
     web::block(move || {
-        let conn: &SqliteConnection = &pool.get().unwrap();
+        let conn: &DBConnection = &pool.get().unwrap();
         models::post_comments(conn, post_id.into_inner())
     })
     .then(convert)
@@ -54,7 +56,7 @@ fn user_comments(
     pool: web::Data<Pool>,
 ) -> impl Future<Item = HttpResponse, Error = AppError> {
     web::block(move || {
-        let conn: &SqliteConnection = &pool.get().unwrap();
+        let conn: &DBConnection = &pool.get().unwrap();
         models::user_comments(conn, user_id.into_inner())
     })
     .then(convert)

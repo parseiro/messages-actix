@@ -5,6 +5,8 @@ use actix_web::{web, HttpResponse};
 use diesel::prelude::*;
 use futures::Future;
 
+type DBConnection = SqliteConnection;
+
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::resource("/users/{id}/posts")
@@ -30,7 +32,7 @@ fn add_post(
     pool: web::Data<Pool>,
 ) -> impl Future<Item = HttpResponse, Error = AppError> {
     web::block(move|| {
-        let conn: &SqliteConnection = &pool.get().unwrap();
+        let conn: &DBConnection = &pool.get().unwrap();
         let key = models::UserKey::ID(user_id.into_inner());
         models::find_user(conn, key).and_then(|user| {
             let post = post.into_inner();
@@ -47,7 +49,7 @@ fn publish_post(
     pool: web::Data<Pool>,
 ) -> impl Future<Item = HttpResponse, Error = AppError> {
     web::block(move|| {
-        let conn: &SqliteConnection = &pool.get().unwrap();
+        let conn: &DBConnection = &pool.get().unwrap();
         models::publish_post(conn, post_id.into_inner())
     })
     .then(convert)
@@ -58,7 +60,7 @@ fn user_posts(
     pool: web::Data<Pool>,
 ) -> impl Future<Item = HttpResponse, Error = AppError> {
     web::block(move|| {
-        let conn: &SqliteConnection = &pool.get().unwrap();
+        let conn: &DBConnection = &pool.get().unwrap();
         models::user_posts(conn, user_id.into_inner())
     })
     .then(convert)
@@ -66,7 +68,7 @@ fn user_posts(
 
 fn all_published_posts(pool: web::Data<Pool>) -> impl Future<Item = HttpResponse, Error = AppError> {
     web::block(move || {
-        let conn: &SqliteConnection = &pool.get().unwrap();
+        let conn: &DBConnection = &pool.get().unwrap();
         models::all_published_posts(conn)
     })
     .then(convert)

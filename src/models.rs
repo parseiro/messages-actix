@@ -5,6 +5,7 @@ use crate::schema::users;
 use diesel::prelude::*;
 
 type Result<T> = std::result::Result<T, AppError>;
+type DBConnection = SqliteConnection;
 
 #[derive(Queryable, Identifiable, Serialize, Debug, PartialEq)]
 pub struct User {
@@ -34,7 +35,7 @@ pub struct Comment {
 }
 */
 pub fn create_user(
-    conn: &SqliteConnection,
+    conn: &DBConnection,
     username: &str,
 ) -> Result<User> {
     conn.transaction(|| {
@@ -56,7 +57,7 @@ pub enum UserKey<'a> {
 }
 
 pub fn find_user<'a>(
-    conn: &SqliteConnection,
+    conn: &DBConnection,
     key: UserKey<'a>,
 ) -> Result<User> {
     match key {
@@ -76,7 +77,7 @@ pub fn find_user<'a>(
 }
 
 /*pub fn create_post(
-    conn: &SqliteConnection,
+    conn: &DBConnection,
     user_var: &User,
     title_var: &str,
     body_var: &str,
@@ -99,7 +100,7 @@ pub fn find_user<'a>(
 }
 
 pub fn publish_post(
-    conn: &SqliteConnection,
+    conn: &DBConnection,
     post_id: i32,
 ) -> Result<Post> {
     conn.transaction(|| {
@@ -115,7 +116,7 @@ pub fn publish_post(
     })
 }
 
-pub fn all_published_posts(conn: &SqliteConnection)
+pub fn all_published_posts(conn: &DBConnection)
 -> Result<Vec<((Post, User), Vec<(Comment, User)>)>> {
     let query = posts::table
         .order(posts::id.desc())
@@ -135,7 +136,7 @@ pub fn all_published_posts(conn: &SqliteConnection)
 }
 
 pub fn user_posts(
-    conn: &SqliteConnection,
+    conn: &DBConnection,
     user_id: i32,
 ) -> Result<Vec<Post>> {
     posts::table
@@ -147,7 +148,7 @@ pub fn user_posts(
 }
 
 pub fn create_comment(
-    conn: &SqliteConnection,
+    conn: &DBConnection,
     user_id_var: i32,
     post_id_var: i32,
     body_var: &str,
@@ -170,7 +171,7 @@ pub fn create_comment(
 }
 
 pub fn post_comments(
-    conn: &SqliteConnection,
+    conn: &DBConnection,
     post_id_var: i32,
 ) -> Result<Vec<(Comment, User)>> {
     comments::table
@@ -189,7 +190,7 @@ pub struct PostWithComment {
 }
 
 pub fn user_comments(
-    conn: &SqliteConnection,
+    conn: &DBConnection,
     user_id_var: i32,
 ) -> Result<Vec<(Comment, PostWithComment)>> {
     comments::table
