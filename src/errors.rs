@@ -60,7 +60,7 @@ impl actix_web::ResponseError for AppError {
         builder.json(ErrorResponse { err })
     }
 
-    fn render_response(&self) -> HttpResponse {
-        self.error_response()
-    }
+    // fn render_response(&self) -> HttpResponse {
+    //     self.error_response()
+    // }
 }
