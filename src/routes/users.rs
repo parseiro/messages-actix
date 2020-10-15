@@ -46,9 +46,9 @@ async fn find_user(name: web::Path<String>, pool: web::Data<Pool>)
 
 
 #[get("/users/{id}")]
-async fn get_user(user_id: web::Path<i32>, pool: web::Data<Pool>) -> impl Responder {
+async fn get_user(user_id: web::Path<i32>/*, pool: web::Data<Pool>*/) -> impl Responder {
     //models::find_user(&pool.get().unwrap(), models::UserKey::ID(user_id.into_inner()))
-    format!("Hello {}", user_id)
+    format!("Hello {:?}", user_id )
 
     /*    web::block(move || {
         let conn = &pool.get().unwrap();

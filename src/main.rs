@@ -36,7 +36,7 @@ async fn main() -> std::io::Result<()> {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
 
-    Blog::new(8998, "0.0.0.0")
+    Blog::new(8998, "127.0.0.1")
         .run(database_url)
         .unwrap()
         .await
