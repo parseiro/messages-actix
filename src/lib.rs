@@ -1,3 +1,8 @@
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+#![warn(anonymous_parameters)]
+
 #[macro_use]
 extern crate diesel;
 #[macro_use]
