@@ -5,15 +5,16 @@ use actix_web::{HttpResponse, Responder, web};
 
 use crate::{models, Pool};
 use crate::errors::AppError;
-use crate::routes::convert;
 use crate::models::User;
+use crate::routes::convert;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg
 // .service(web::resource("/users").route(web::post().to_async(create_user)))
 //        .service(web::resource("/users/find/{name}").route(web::get().to_async(find_user)))
 //         .service(web::resource("/users/{id}").route(web::get().to_async(get_user)));
-        .service(get_user);
+        .service(get_user)
+        .service(list_users);
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -22,18 +23,17 @@ struct UserInput {
 }
 
 async fn create_user(item: web::Json<UserInput>, pool: web::Data<Pool>)
-    -> impl Responder {
+-> impl Responder {
+    let conn = pool.get().unwrap();
+    let username = item.into_inner().username;
 
-    let user = web::block(move || {
-        let conn = &pool.get().unwrap();
-        let username = item.into_inner().username;
-        models::create_user(conn, username.as_str())
-    }).await;
+    let user = web::block(move || models::create_user(&conn, username.as_str())).await
+        .map_err(|e| {
+            eprintln!("{:?}", e);
+            e
+        });
 
-    let user = user.map_err(|e| {
-        eprintln!("{:?}", e);
-        HttpResponse::InternalServerError().finish()
-    });
+    convert(user)
 }
 
 /*#[get("/users/find/{name}")]
@@ -53,7 +53,14 @@ async fn find_user(name: web::Path<String>, pool: web::Data<Pool>)
 async fn list_users(pool: web::Data<Pool>) -> impl Responder {
     let conn = pool.get().unwrap();
 
+    let response = web::block(move || models::list_users(&conn))
+        .await
+        .map_err(|e| {
+            eprintln!("{:?}", e);
+            e
+        });
 
+    convert(response)
 }
 
 #[get("/users/{id}")]
@@ -67,17 +74,13 @@ async fn get_user(user_id: web::Path<i32>, pool: web::Data<Pool>) -> impl Respon
     //format!("Hello {:?}", user_id);
 
     let user = web::block(move || models::find_user(&conn, key))
-        .await;
-
-    let user = user.map_err(|e| {
+        .await
+        .map_err(|e| {
             eprintln!("{:?}", e);
-            HttpResponse::InternalServerError().finish()
+            e
+            //HttpResponse::InternalServerError().finish()
         });
 
-    println!("{:?}", user);
-
-    // HttpResponse::Ok().json(user)
-    //Ok(HttpResponse::Ok().finish())
-    "oi"
+    convert(user)
 }
 

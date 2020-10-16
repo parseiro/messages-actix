@@ -1,8 +1,9 @@
-use crate::errors::AppError;
-use crate::schema::users;
-//use crate::schema::posts, 
+//use crate::schema::posts,
 //use crate::schema::comments;
 use diesel::prelude::*;
+
+use crate::errors::AppError;
+use crate::schema::users;
 
 type Result<T> = std::result::Result<T, AppError>;
 type DBConnection = PgConnection;
@@ -34,14 +35,10 @@ pub struct Comment {
     pub body: String,
 }*/
 
-pub fn create_user(
-//    conn: &DBConnection,
-    conn: &DBConnection,
-    username: &str,
-) -> Result<User> {
+pub fn create_user(conn: &DBConnection, username: &str) -> Result<User> {
     conn.transaction(|| {
         diesel::insert_into(users::table)
-            .values((users::name.eq(username),))
+            .values((users::name.eq(username), ))
             .execute(conn)?;
 
         users::table
@@ -57,13 +54,18 @@ pub enum UserKey<'a> {
     ID(i32),
 }
 
-pub fn list_users(conn: &DBConnection) -> Option<List<User>> {
+pub fn list_users(conn: &DBConnection) -> Result<Vec<User>> {
     let a = users::table
-        .select((users::id, users::name));
+        .select((users::id, users::name))
+        .load::<User>(conn)?;
 
-    if let Some(list) = a {
+    /*if a.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(a))
+    }*/
 
-    }
+    Ok(a)
 }
 
 pub fn find_user(
@@ -76,14 +78,13 @@ pub fn find_user(
             .select((users::id, users::name))
             .first::<User>(conn)
             .map_err(AppError::from),
-        
+
         UserKey::ID(id) => users::table
             .find(id)
             .select((users::id, users::name))
             .first::<User>(conn)
             .map_err(Into::into),
- 
-        }
+    }
 }
 
 /*pub fn create_post(
