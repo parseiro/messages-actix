@@ -6,6 +6,7 @@ use actix_web::{HttpResponse, Responder, web};
 use crate::{models, Pool};
 use crate::errors::AppError;
 use crate::routes::convert;
+use crate::models::User;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg
@@ -46,15 +47,27 @@ async fn find_user(name: web::Path<String>, pool: web::Data<Pool>)
 
 
 #[get("/users/{id}")]
-async fn get_user(user_id: web::Path<i32>/*, pool: web::Data<Pool>*/) -> impl Responder {
-    //models::find_user(&pool.get().unwrap(), models::UserKey::ID(user_id.into_inner()))
-    format!("Hello {:?}", user_id )
+async fn get_user(user_id: web::Path<i32>, pool: web::Data<Pool>) -> impl Responder {
+    let user_id = user_id.into_inner();
+    let conn = pool.get().unwrap();
+    let key = models::UserKey::ID(user_id);
 
-    /*    web::block(move || {
-        let conn = &pool.get().unwrap();
-        let id = user_id.into_inner();
-        let key = models::UserKey::ID(id);
-        models::find_user(conn, key)
-    })
-    .then(convert)*/
+
+    //models::find_user(&pool.get().unwrap(), models::UserKey::ID(user_id.into_inner()))
+    //format!("Hello {:?}", user_id);
+
+    let user = web::block(move || models::find_user(&conn, key))
+        .await;
+
+    let user = user.map_err(|e| {
+            eprintln!("{:?}", e);
+            HttpResponse::InternalServerError().finish()
+        });
+
+    println!("{:?}", user);
+
+    // Ok(HttpResponse::Ok().json(user))
+    //Ok(HttpResponse::Ok().finish())
+    "oi"
 }
+

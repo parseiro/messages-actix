@@ -57,9 +57,9 @@ pub enum UserKey<'a> {
     ID(i32),
 }
 
-pub fn find_user<'a>(
+pub fn find_user(
     conn: &DBConnection,
-    key: UserKey<'a>,
+    key: UserKey,
 ) -> Result<User> {
     match key {
         UserKey::Username(name) => users::table
