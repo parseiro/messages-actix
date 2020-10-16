@@ -57,6 +57,15 @@ pub enum UserKey<'a> {
     ID(i32),
 }
 
+pub fn list_users(conn: &DBConnection) -> Option<List<User>> {
+    let a = users::table
+        .select((users::id, users::name));
+
+    if let Some(list) = a {
+
+    }
+}
+
 pub fn find_user(
     conn: &DBConnection,
     key: UserKey,

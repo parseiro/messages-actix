@@ -53,6 +53,5 @@ impl Blog {
             .run();
         
         Ok(server)
-
     }
 }

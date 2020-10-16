@@ -21,17 +21,20 @@ struct UserInput {
     username: String,
 }
 
-/*fn create_user(
-    item: web::Json<UserInput>,
-    pool: web::Data<Pool>,
-) -> impl Future<Item = HttpResponse, Error = AppError> {
-    web::block(move || {
+async fn create_user(item: web::Json<UserInput>, pool: web::Data<Pool>)
+    -> impl Responder {
+
+    let user = web::block(move || {
         let conn = &pool.get().unwrap();
         let username = item.into_inner().username;
         models::create_user(conn, username.as_str())
-    })
-    .then(convert)
-}*/
+    }).await;
+
+    let user = user.map_err(|e| {
+        eprintln!("{:?}", e);
+        HttpResponse::InternalServerError().finish()
+    });
+}
 
 /*#[get("/users/find/{name}")]
 async fn find_user(name: web::Path<String>, pool: web::Data<Pool>)
@@ -45,6 +48,13 @@ async fn find_user(name: web::Path<String>, pool: web::Data<Pool>)
     .then(convert)
 }*/
 
+
+#[get("/users")]
+async fn list_users(pool: web::Data<Pool>) -> impl Responder {
+    let conn = pool.get().unwrap();
+
+
+}
 
 #[get("/users/{id}")]
 async fn get_user(user_id: web::Path<i32>, pool: web::Data<Pool>) -> impl Responder {
@@ -66,7 +76,7 @@ async fn get_user(user_id: web::Path<i32>, pool: web::Data<Pool>) -> impl Respon
 
     println!("{:?}", user);
 
-    // Ok(HttpResponse::Ok().json(user))
+    // HttpResponse::Ok().json(user)
     //Ok(HttpResponse::Ok().finish())
     "oi"
 }
