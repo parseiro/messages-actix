@@ -50,7 +50,7 @@ pub struct UserOptionals {
 
 #[derive(Deserialize, Insertable, Debug)]
 #[table_name = "users"]
-pub struct NewUser {
+pub struct UserToCreate {
     pub name: String,
     pub email: String,
     pub phonenumber: String,
@@ -77,15 +77,7 @@ pub struct Comment {
     pub body: String,
 }*/
 
-pub fn create_user(conn: &DBConnection, user: UserOptionals) -> Result<User> {
-/*    conn.transaction(|| {
-        diesel::insert_into(users::table)
-            .values(&user)
-            // .returning(users::id)
-            .get_result(conn)
-            .map_err(Into::into)
-    })*/
-
+pub fn create_user(conn: &DBConnection, user: UserToCreate) -> Result<User> {
     diesel::insert_into(users::table)
         .values(&user)
         .get_result(conn)
