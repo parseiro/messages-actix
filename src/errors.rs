@@ -6,6 +6,7 @@ use diesel::result::{
 use serde::Serialize;
 use std::fmt;
 
+
 #[derive(Debug)]
 pub enum AppError {
     RecordAlreadyExists,
@@ -34,6 +35,12 @@ impl From<diesel::result::Error> for AppError {
         }
     }
 }
+
+/*impl From<NoneError> for AppError {
+    fn from(_: NoneError) -> Self {
+        AppError::RecordNotFound
+    }
+}*/
 
 impl From<BlockingError<AppError>> for AppError {
     fn from(e: BlockingError<AppError>) -> Self {

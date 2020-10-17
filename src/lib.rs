@@ -49,7 +49,7 @@ impl Blog {
                             App::new()
                                 .data(pool.clone())
                                 //.wrap(middleware::Compress::new(ContentEncoding::Br))
-                                //.wrap(middleware::Logger::default())
+                                .wrap(middleware::Logger::default())
                                 .configure(routes::users::configure)
                         //.configure(routes::posts::configure)
                         //.configure(routes::comments::configure)

@@ -13,15 +13,39 @@ use crate::schema::users;
 type Result<T> = std::result::Result<T, AppError>;
 type DBConnection = PgConnection;
 
-#[derive(Queryable, Identifiable, Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Queryable, Identifiable, Deserialize, Serialize, AsChangeset, Debug, PartialEq)]
 pub struct User {
     pub id: i32,
     pub name: String,
     pub email: String,
     pub phonenumber: String,
+
+    #[serde(skip_serializing)]
     pub email_verified: bool,
+
+    #[serde(skip_serializing)]
     pub created_at: chrono::DateTime<Utc>,
+
+    #[serde(skip_serializing)]
     pub senha: String,
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+// #[table_name = "users"]
+pub struct UserOptionals {
+    pub id: Option<i32>,
+    pub name: Option<String>,
+    pub email: Option<String>,
+    pub phonenumber: Option<String>,
+
+    #[serde(skip_serializing)]
+    pub email_verified: Option<bool>,
+
+    #[serde(skip_serializing)]
+    pub created_at: Option<chrono::DateTime<Utc>>,
+
+    // #[serde(skip_serializing)]
+    pub senha: Option<String>,
 }
 
 #[derive(Deserialize, Insertable, Debug)]
@@ -30,7 +54,6 @@ pub struct NewUser {
     pub name: String,
     pub email: String,
     pub phonenumber: String,
-    pub senha: String,
 }
 
 
@@ -54,16 +77,12 @@ pub struct Comment {
     pub body: String,
 }*/
 
-pub fn create_user(conn: &DBConnection, user: NewUser) -> Result<User> {
+pub fn create_user(conn: &DBConnection, user: UserOptionals) -> Result<User> {
 /*    conn.transaction(|| {
         diesel::insert_into(users::table)
             .values(&user)
-            .execute(conn)?;
-
-        users::table
-            .order(users::id.desc())
-            .select(users::all_columns)
-            .first(conn)
+            // .returning(users::id)
+            .get_result(conn)
             .map_err(Into::into)
     })*/
 
@@ -73,48 +92,43 @@ pub fn create_user(conn: &DBConnection, user: NewUser) -> Result<User> {
         .map_err(Into::into)
 }
 
-pub fn update_user(conn: &DBConnection, user: User) -> Result<User> {
-    conn.transaction(|| {
-        diesel::update(users::table.filter(users::id.eq(user.id)))
-            .set((
-                users::name.eq(user.name),
-                users::email.eq(user.email),
-                users::phonenumber.eq(user.phonenumber),
-                users::email_verified.eq(user.email_verified)
-            ))
-            .execute(conn)?;
+pub fn update_user(conn: &DBConnection, user: UserOptionals) -> Result<User> {
+    if user.id.is_none() {
+        return Err(AppError::RecordNotFound);
+    }
 
-        users::table
-            .order(users::id.desc())
-            .select(users::all_columns)
-            .first(conn)
-            .map_err(Into::into)
-    })
+    let id = user.id.unwrap();
+
+    let mut old_user = find_user(conn, UserKey::ID(id))?;
+
+    if let Some(name) = user.name { old_user.name = name; }
+
+    if let Some(email) = user.email { old_user.email = email; }
+
+    if let Some(phonenumber) = user.phonenumber { old_user.phonenumber = phonenumber; }
+
+    diesel::update(users::table.filter(users::id.eq(id)))
+        .set(&old_user)
+        .get_result(conn)
+        .map_err(Into::into)
 }
 
 pub enum UserKey<'a> {
-    Username(&'a str),
+    Email(&'a str),
     ID(i32),
 }
 
 pub fn list_users(conn: &DBConnection) -> Result<Vec<User>> {
-    let a = users::table
+    let vec = users::table
         .select(users::all_columns)
-        .load::<User>(conn)?;
-
-    /*if a.is_empty() {
-        Ok(None)
-    } else {
-        Ok(Some(a))
-    }*/
-
-    Ok(a)
+        .load(conn)?;
+    Ok(vec)
 }
 
 pub fn find_user(conn: &DBConnection, key: UserKey) -> Result<User> {
     match key {
-        UserKey::Username(name) => users::table
-            .filter(users::name.eq(name))
+        UserKey::Email(email) => users::table
+            .filter(users::email.eq(email))
             .select(users::all_columns)
             .first::<User>(conn)
             .map_err(AppError::from),
@@ -147,7 +161,6 @@ pub fn find_user(conn: &DBConnection, key: UserKey) -> Result<User> {
             .select(posts::all_columns)
             .first(conn)
             .map_err(Into::into)
-    })
 }
 
 pub fn publish_post(

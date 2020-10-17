@@ -5,7 +5,7 @@ use actix_web::{HttpResponse, Responder, web};
 
 use crate::{models, Pool};
 use crate::errors::AppError;
-use crate::models::{User, NewUser};
+use crate::models::{User, NewUser, UserOptionals};
 use crate::routes::convert;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -17,10 +17,12 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 }
 
 #[post("/users")]
-async fn create_user(item: web::Json<NewUser>, pool: web::Data<Pool>)
+async fn create_user(item: web::Json<UserOptionals>, pool: web::Data<Pool>)
 -> impl Responder {
     let conn = pool.get().unwrap();
     let user = item.into_inner();
+
+
 
     let user = web::block(move || models::create_user(&conn, user))
         .await;
@@ -29,7 +31,7 @@ async fn create_user(item: web::Json<NewUser>, pool: web::Data<Pool>)
 }
 
 #[put("/users")]
-async fn update_user(item: web::Json<User>, pool: web::Data<Pool>)
+async fn update_user(item: web::Json<UserOptionals>, pool: web::Data<Pool>)
                      -> impl Responder {
     let conn = pool.get().unwrap();
     let user = item.into_inner();
