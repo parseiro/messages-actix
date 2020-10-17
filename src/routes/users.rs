@@ -1,6 +1,6 @@
 extern crate diesel;
 
-use actix_web::{App, get, post, HttpServer};
+use actix_web::{App, get, post, put, delete, HttpServer};
 use actix_web::{HttpResponse, Responder, web};
 
 use crate::{models, Pool};

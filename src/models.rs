@@ -13,7 +13,7 @@ use crate::schema::users;
 type Result<T> = std::result::Result<T, AppError>;
 type DBConnection = PgConnection;
 
-#[derive(Queryable, Identifiable, Serialize, Debug, PartialEq)]
+#[derive(Queryable, Identifiable, Deserialize, Serialize, Debug, PartialEq)]
 pub struct User {
     pub id: i32,
     pub name: String,
@@ -70,12 +70,14 @@ pub fn create_user(conn: &DBConnection, user: NewUser) -> Result<User> {
 
 pub fn update_user(conn: &DBConnection, user: User) -> Result<User> {
     conn.transaction(|| {
-        diesel::update(users.filter(users::id.eq(user.id)))
+        diesel::update(users::table.filter(users::id.eq(user.id)))
             .set((
                 users::name.eq(user.name),
-                  users::email.eq(user.email)
+                users::email.eq(user.email),
+                users::phonenumber.eq(user.phonenumber),
+                users::email_verified.eq(user.email_verified)
             ))
-            .get_result(conn)?;
+            .execute(conn)?;
 
         users::table
             .order(users::id.desc())
