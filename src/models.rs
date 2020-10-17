@@ -1,29 +1,17 @@
 use std::time::SystemTime;
 
+use chrono::Utc;
 //use crate::schema::posts,
 //use crate::schema::comments;
 use diesel::prelude::*;
-
-use crate::errors::AppError;
-use crate::schema::users;
-use chrono::Utc;
 use serde::{Serialize, Serializer};
 use serde::ser::SerializeStruct;
 
+use crate::errors::AppError;
+use crate::schema::users;
+
 type Result<T> = std::result::Result<T, AppError>;
 type DBConnection = PgConnection;
-
-/*impl Serialize for chrono::DateTime<Utc> {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
-        S: Serializer {
-        // 2 is the number of fields in the struct.
-        let mut state = serializer.serialize_struct("Datime", 2)?;
-        state.serialize_field("r", &self.r)?;
-        state.serialize_field("g", &self.g)?;
-        state.serialize_field("b", &self.b)?;
-        state.end()
-    }
-}*/
 
 #[derive(Queryable, Identifiable, Serialize, Debug, PartialEq)]
 pub struct User {
@@ -71,6 +59,23 @@ pub fn create_user(conn: &DBConnection, user: NewUser) -> Result<User> {
         diesel::insert_into(users::table)
             .values(&user)
             .execute(conn)?;
+
+        users::table
+            .order(users::id.desc())
+            .select(users::all_columns)
+            .first(conn)
+            .map_err(Into::into)
+    })
+}
+
+pub fn update_user(conn: &DBConnection, user: User) -> Result<User> {
+    conn.transaction(|| {
+        diesel::update(users.filter(users::id.eq(user.id)))
+            .set((
+                users::name.eq(user.name),
+                  users::email.eq(user.email)
+            ))
+            .get_result(conn)?;
 
         users::table
             .order(users::id.desc())
@@ -129,7 +134,7 @@ pub fn find_user(conn: &DBConnection, key: UserKey) -> Result<User> {
                 posts::body.eq(body_var),
             ))
             .execute(conn)?;
-        
+
         posts::table
             .order(posts::id.desc())
             .select(posts::all_columns)
@@ -146,7 +151,7 @@ pub fn publish_post(
         diesel::update(posts::table.filter(posts::id.eq(post_id)))
             .set(posts::published.eq(true))
             .execute(conn)?;
-        
+
         posts::table
             .find(post_id)
             .select(posts::all_columns)
@@ -170,7 +175,7 @@ pub fn all_published_posts(conn: &DBConnection)
         .select((comments::all_columns, (users::id, users::username)))
         .load::<(Comment, User)>(conn)?
         .grouped_by(&posts);
-    
+
         Ok(posts.into_iter().zip(post_users).zip(comments).collect())
 }
 

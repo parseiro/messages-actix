@@ -15,7 +15,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 //         .service(web::resource("/users/{id}").route(web::get().to_async(get_user)));
         .service(create_user)
         .service(get_user)
-        .service(list_users);
+        .service(list_users)
+        .service(update_user);
 }
 
 #[post("/users")]
@@ -24,13 +25,26 @@ async fn create_user(item: web::Json<NewUser>, pool: web::Data<Pool>)
     // eprintln!("Entrando na funcao create_user {:?}", item);
 
     let conn = pool.get().unwrap();
-    let new_user = item.into_inner();
+    let user = item.into_inner();
 
-    let user = web::block(move || models::create_user(&conn, new_user)).await
+    let user = web::block(move || models::create_user(&conn, user)).await
         .map_err(|e| {
             eprintln!("{:?}", e);
             e
         });
+
+    convert(user)
+}
+
+#[put("/users")]
+async fn update_user(item: web::Json<User>, pool: web::Data<Pool>)
+                     -> impl Responder {
+    // eprintln!("Entrando na funcao update_user {:?}", item);
+
+    let conn = pool.get().unwrap();
+    let user = item.into_inner();
+
+    let user = web::block(move || models::update_user(&conn, user)).await;
 
     convert(user)
 }
