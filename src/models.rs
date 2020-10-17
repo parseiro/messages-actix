@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 //use crate::schema::posts,
 //use crate::schema::comments;
 use diesel::prelude::*;
@@ -11,7 +13,21 @@ type DBConnection = PgConnection;
 #[derive(Queryable, Identifiable, Serialize, Debug, PartialEq)]
 pub struct User {
     pub id: i32,
-    pub username: String,
+    pub name: String,
+    pub email: String,
+    pub phonenumber: String,
+    pub verified: bool,
+    pub created_at: SystemTime,
+    pub senha: String,
+}
+
+#[derive(Deserialize, Insertable)]
+#[table_name = "users"]
+pub struct NewUser {
+    pub name: String,
+    pub email: String,
+    pub phonenumber: String,
+    pub senha: String,
 }
 
 
@@ -35,15 +51,15 @@ pub struct Comment {
     pub body: String,
 }*/
 
-pub fn create_user(conn: &DBConnection, username: &str) -> Result<User> {
+pub fn create_user(conn: &DBConnection, user: NewUser) -> Result<User> {
     conn.transaction(|| {
         diesel::insert_into(users::table)
-            .values((users::name.eq(username), ))
+            .values(&user)
             .execute(conn)?;
 
         users::table
             .order(users::id.desc())
-            .select((users::id, users::name))
+            .select(users::all_columns)
             .first(conn)
             .map_err(Into::into)
     })
@@ -56,7 +72,7 @@ pub enum UserKey<'a> {
 
 pub fn list_users(conn: &DBConnection) -> Result<Vec<User>> {
     let a = users::table
-        .select((users::id, users::name))
+        .select(users::all_columns)
         .load::<User>(conn)?;
 
     /*if a.is_empty() {
@@ -68,20 +84,17 @@ pub fn list_users(conn: &DBConnection) -> Result<Vec<User>> {
     Ok(a)
 }
 
-pub fn find_user(
-    conn: &DBConnection,
-    key: UserKey,
-) -> Result<User> {
+pub fn find_user(conn: &DBConnection, key: UserKey) -> Result<User> {
     match key {
         UserKey::Username(name) => users::table
             .filter(users::name.eq(name))
-            .select((users::id, users::name))
+            .select(users::all_columns)
             .first::<User>(conn)
             .map_err(AppError::from),
 
         UserKey::ID(id) => users::table
             .find(id)
-            .select((users::id, users::name))
+            .select(users::all_columns)
             .first::<User>(conn)
             .map_err(Into::into),
     }
