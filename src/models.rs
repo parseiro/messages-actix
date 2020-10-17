@@ -54,6 +54,7 @@ pub struct UserToCreate {
     pub name: String,
     pub email: String,
     pub phonenumber: String,
+    pub senha: String,
 }
 
 
