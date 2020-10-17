@@ -16,12 +16,12 @@ pub struct User {
     pub name: String,
     pub email: String,
     pub phonenumber: String,
-    pub verified: bool,
-    pub created_at: SystemTime,
+    pub email_verified: bool,
+    pub created_at: chrono::NaiveDateTime,
     pub senha: String,
 }
 
-#[derive(Deserialize, Insertable)]
+#[derive(Deserialize, Insertable, Debug)]
 #[table_name = "users"]
 pub struct NewUser {
     pub name: String,

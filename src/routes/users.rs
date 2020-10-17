@@ -1,6 +1,6 @@
 extern crate diesel;
 
-use actix_web::{App, get, HttpServer};
+use actix_web::{App, get, post, HttpServer};
 use actix_web::{HttpResponse, Responder, web};
 
 use crate::{models, Pool};
@@ -13,12 +13,16 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 // .service(web::resource("/users").route(web::post().to_async(create_user)))
 //        .service(web::resource("/users/find/{name}").route(web::get().to_async(find_user)))
 //         .service(web::resource("/users/{id}").route(web::get().to_async(get_user)));
+        .service(create_user)
         .service(get_user)
         .service(list_users);
 }
 
+#[post("/users")]
 async fn create_user(item: web::Json<NewUser>, pool: web::Data<Pool>)
 -> impl Responder {
+    // eprintln!("Entrando na funcao create_user {:?}", item);
+
     let conn = pool.get().unwrap();
     let new_user = item.into_inner();
 

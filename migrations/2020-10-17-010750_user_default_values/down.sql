@@ -1,0 +1,8 @@
+ALTER TABLE usErs ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE users ALTER COLUMN created_at TYPE timestamptz;
+ALTER TABLE users RENAME COLUMN email_verified TO verified;
+ALTER TABLE users ALTER COLUMN verified DROP DEFAULT;
+
+
+
+

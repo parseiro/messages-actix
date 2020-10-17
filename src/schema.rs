@@ -4,8 +4,8 @@ table! {
         name -> Varchar,
         email -> Varchar,
         phonenumber -> Varchar,
-        verified -> Bool,
-        created_at -> Timestamp,
+        email_verified -> Bool,
+        created_at -> Timestamptz,
         senha -> Varchar,
     }
 }
