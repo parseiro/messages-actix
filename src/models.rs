@@ -55,7 +55,7 @@ pub struct Comment {
 }*/
 
 pub fn create_user(conn: &DBConnection, user: NewUser) -> Result<User> {
-    conn.transaction(|| {
+/*    conn.transaction(|| {
         diesel::insert_into(users::table)
             .values(&user)
             .execute(conn)?;
@@ -65,7 +65,12 @@ pub fn create_user(conn: &DBConnection, user: NewUser) -> Result<User> {
             .select(users::all_columns)
             .first(conn)
             .map_err(Into::into)
-    })
+    })*/
+
+    diesel::insert_into(users::table)
+        .values(&user)
+        .get_result(conn)
+        .map_err(Into::into)
 }
 
 pub fn update_user(conn: &DBConnection, user: User) -> Result<User> {

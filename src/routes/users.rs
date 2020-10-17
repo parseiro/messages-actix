@@ -10,9 +10,6 @@ use crate::routes::convert;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg
-// .service(web::resource("/users").route(web::post().to_async(create_user)))
-//        .service(web::resource("/users/find/{name}").route(web::get().to_async(find_user)))
-//         .service(web::resource("/users/{id}").route(web::get().to_async(get_user)));
         .service(create_user)
         .service(get_user)
         .service(list_users)
@@ -22,16 +19,11 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 #[post("/users")]
 async fn create_user(item: web::Json<NewUser>, pool: web::Data<Pool>)
 -> impl Responder {
-    // eprintln!("Entrando na funcao create_user {:?}", item);
-
     let conn = pool.get().unwrap();
     let user = item.into_inner();
 
-    let user = web::block(move || models::create_user(&conn, user)).await
-        .map_err(|e| {
-            eprintln!("{:?}", e);
-            e
-        });
+    let user = web::block(move || models::create_user(&conn, user))
+        .await;
 
     convert(user)
 }
@@ -39,12 +31,11 @@ async fn create_user(item: web::Json<NewUser>, pool: web::Data<Pool>)
 #[put("/users")]
 async fn update_user(item: web::Json<User>, pool: web::Data<Pool>)
                      -> impl Responder {
-    // eprintln!("Entrando na funcao update_user {:?}", item);
-
     let conn = pool.get().unwrap();
     let user = item.into_inner();
 
-    let user = web::block(move || models::update_user(&conn, user)).await;
+    let user = web::block(move || models::update_user(&conn, user))
+        .await;
 
     convert(user)
 }
@@ -67,11 +58,7 @@ async fn list_users(pool: web::Data<Pool>) -> impl Responder {
     let conn = pool.get().unwrap();
 
     let response = web::block(move || models::list_users(&conn))
-        .await
-        .map_err(|e| {
-            eprintln!("{:?}", e);
-            e
-        });
+        .await;
 
     convert(response)
 }
@@ -82,17 +69,8 @@ async fn get_user(user_id: web::Path<i32>, pool: web::Data<Pool>) -> impl Respon
     let conn = pool.get().unwrap();
     let key = models::UserKey::ID(user_id);
 
-
-    //models::find_user(&pool.get().unwrap(), models::UserKey::ID(user_id.into_inner()))
-    //format!("Hello {:?}", user_id);
-
     let user = web::block(move || models::find_user(&conn, key))
-        .await
-        .map_err(|e| {
-            eprintln!("{:?}", e);
-            e
-            //HttpResponse::InternalServerError().finish()
-        });
+        .await;
 
     convert(user)
 }
