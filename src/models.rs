@@ -6,9 +6,24 @@ use diesel::prelude::*;
 
 use crate::errors::AppError;
 use crate::schema::users;
+use chrono::Utc;
+use serde::{Serialize, Serializer};
+use serde::ser::SerializeStruct;
 
 type Result<T> = std::result::Result<T, AppError>;
 type DBConnection = PgConnection;
+
+/*impl Serialize for chrono::DateTime<Utc> {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
+        S: Serializer {
+        // 2 is the number of fields in the struct.
+        let mut state = serializer.serialize_struct("Datime", 2)?;
+        state.serialize_field("r", &self.r)?;
+        state.serialize_field("g", &self.g)?;
+        state.serialize_field("b", &self.b)?;
+        state.end()
+    }
+}*/
 
 #[derive(Queryable, Identifiable, Serialize, Debug, PartialEq)]
 pub struct User {
@@ -17,7 +32,7 @@ pub struct User {
     pub email: String,
     pub phonenumber: String,
     pub email_verified: bool,
-    pub created_at: chrono::NaiveDateTime,
+    pub created_at: chrono::DateTime<Utc>,
     pub senha: String,
 }
 
